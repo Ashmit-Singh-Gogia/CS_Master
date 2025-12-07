@@ -38,6 +38,7 @@ func main() {
 		w.Write([]byte("Quiz Api Running"))
 	})
 	r.Post("/questions", CreateQuestions(db))
+	r.Get("/questions", getAllQuestions(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
 }
@@ -81,5 +82,32 @@ func CreateQuestions(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		json.NewEncoder(w).Encode("Question Created Successfully")
+	}
+}
+
+func getAllQuestions(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rows, err := db.Query("SELECT id, questions_text, options, correct_index FROM questions")
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		defer rows.Close()
+		var list []Question
+		for rows.Next() {
+			var q Question
+			var opts string
+
+			err := rows.Scan(&q.ID, &q.QuestionText, &opts, &q.CorrectIndex)
+			if err != nil {
+				continue
+			}
+			json.Unmarshal([]byte(opts), &q.Options)
+
+			list = append(list, q)
+		}
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", " ")
+		enc.Encode(list)
 	}
 }
