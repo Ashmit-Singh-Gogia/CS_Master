@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
@@ -39,6 +40,7 @@ func main() {
 	})
 	r.Post("/questions", CreateQuestions(db))
 	r.Get("/questions", getAllQuestions(db))
+	r.Get("/questions/{id}", getOneQuestion(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
 }
@@ -109,5 +111,34 @@ func getAllQuestions(db *sql.DB) http.HandlerFunc {
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", " ")
 		enc.Encode(list)
+	}
+}
+func getOneQuestion(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		var q Question
+		var opts string
+
+		err = db.QueryRow(
+			"SELECT id, questions_text, options, correct_index FROM questions WHERE id=$1",
+			id,
+		).Scan(&q.ID, &q.QuestionText, &opts, &q.CorrectIndex)
+
+		if err == sql.ErrNoRows {
+			http.Error(w, err.Error(), 404)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		json.Unmarshal([]byte(opts), &q.Options)
+		json.NewEncoder(w).Encode(q)
 	}
 }
