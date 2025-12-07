@@ -41,6 +41,7 @@ func main() {
 	r.Post("/questions", CreateQuestions(db))
 	r.Get("/questions", getAllQuestions(db))
 	r.Get("/questions/{id}", getOneQuestion(db))
+	r.Put("/questions/{id}", updateQuestion(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
 }
@@ -140,5 +141,41 @@ func getOneQuestion(db *sql.DB) http.HandlerFunc {
 
 		json.Unmarshal([]byte(opts), &q.Options)
 		json.NewEncoder(w).Encode(q)
+	}
+}
+
+func updateQuestion(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		var q Question
+		err = json.NewDecoder(r.Body).Decode(&q)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		opts, err := json.Marshal(q.Options)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		result, err := db.Exec(
+			"UPDATE questions SET questions_text=$1, options=$2, correct_index=$3 WHERE id=$4",
+			q.QuestionText, string(opts), q.CorrectIndex, id,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		numberOfRows, _ := result.RowsAffected()
+		if numberOfRows == 0 {
+			http.Error(w, "Question not found", 404)
+			return
+		}
+		w.WriteHeader(204)
 	}
 }
