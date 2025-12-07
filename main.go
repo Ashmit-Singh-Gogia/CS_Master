@@ -42,6 +42,7 @@ func main() {
 	r.Get("/questions", getAllQuestions(db))
 	r.Get("/questions/{id}", getOneQuestion(db))
 	r.Put("/questions/{id}", updateQuestion(db))
+	r.Delete("/questions/{id}", deleteQuestion(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
 }
@@ -174,6 +175,32 @@ func updateQuestion(db *sql.DB) http.HandlerFunc {
 		numberOfRows, _ := result.RowsAffected()
 		if numberOfRows == 0 {
 			http.Error(w, "Question not found", 404)
+			return
+		}
+		w.WriteHeader(204)
+	}
+}
+
+func deleteQuestion(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		result, err := db.Exec("DELETE FROM questions WHERE id=$1", id)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		if rows == 0 {
+			http.Error(w, "Not Found or Already Deleted", 404)
 			return
 		}
 		w.WriteHeader(204)
