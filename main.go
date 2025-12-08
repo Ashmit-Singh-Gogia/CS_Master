@@ -1,24 +1,24 @@
 package main
 
 import (
-	"CS_Master/internal/db"
+	dbpkg "CS_Master/internal/db"
 	"CS_Master/internal/models"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
+
 	_ "github.com/lib/pq"
 )
 
 func main() {
 
-	db := db.Connect()
+	db := dbpkg.Connect()
 	fmt.Println("Connected to CS_MasterDB successfully!")
-	createQuestionsTable(db)
+	dbpkg.CreateQuestionsTable(db)
 	fmt.Println("Questions table ready!")
 
 	r := chi.NewRouter()
@@ -33,21 +33,6 @@ func main() {
 	r.Post("/questions/{id}/check", checkAnswer(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
-}
-
-func createQuestionsTable(db *sql.DB) {
-	query := `
-	CREATE TABLE IF NOT EXISTS questions(
-		id SERIAL PRIMARY KEY,
-		questions_text TEXT NOT NULL,
-		options TEXT NOT NULL,
-		correct_index INT NOT NULL
-	)
-	`
-	_, err := db.Exec(query)
-	if err != nil {
-		log.Fatal("Error creating table:, ", err)
-	}
 }
 
 func CreateQuestions(db *sql.DB) http.HandlerFunc {
