@@ -4,10 +4,11 @@ import (
 	"CS_Master/internal/models"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 func CreateQuestions(db *sql.DB) http.HandlerFunc {
@@ -66,6 +67,7 @@ func GetAllQuestions(db *sql.DB) http.HandlerFunc {
 
 func GetOneQuestion(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("HANDLER HIT")
 		idStr := chi.URLParam(r, "id")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
