@@ -43,6 +43,7 @@ func main() {
 	r.Get("/questions/{id}", getOneQuestion(db))
 	r.Put("/questions/{id}", updateQuestion(db))
 	r.Delete("/questions/{id}", deleteQuestion(db))
+	r.Post("/questions/{id}/check", checkAnswer(db))
 	fmt.Println("Server running on http://localhost:8000")
 	http.ListenAndServe(":8000", r)
 }
@@ -204,5 +205,39 @@ func deleteQuestion(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(204)
+	}
+}
+
+func checkAnswer(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		var AnswerBody struct {
+			Answer int `json:"answer"`
+		}
+		err = json.NewDecoder(r.Body).Decode(&AnswerBody)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		var correctIndex int
+
+		err = db.QueryRow(
+			"SELECT correct_index FROM questions WHERE id = $1",
+			id,
+		).Scan(&correctIndex)
+
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		isCorrect := AnswerBody.Answer == correctIndex
+		json.NewEncoder(w).Encode(map[string]bool{
+			"correct": isCorrect,
+		})
 	}
 }
