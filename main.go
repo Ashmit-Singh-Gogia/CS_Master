@@ -12,6 +12,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Phase 1 Completed
+
 type Question struct {
 	ID           int      `json:"id"`
 	QuestionText string   `json:"questions_text"`
