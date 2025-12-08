@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CS_Master/internal/models"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,15 +12,6 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 )
-
-// Phase 1 Completed
-
-type Question struct {
-	ID           int      `json:"id"`
-	QuestionText string   `json:"questions_text"`
-	Options      []string `json:"options"`
-	CorrectIndex int      `json:"correct_index"`
-}
 
 func main() {
 	connStr := "host=localhost port=5433 user=postgres password=postgres dbname=CS_MasterDB sslmode=disable"
@@ -67,7 +59,7 @@ func createQuestionsTable(db *sql.DB) {
 
 func CreateQuestions(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var q Question
+		var q models.Question
 		err := json.NewDecoder(r.Body).Decode(&q)
 		if err != nil {
 			http.Error(w, err.Error(), 400)
@@ -100,9 +92,9 @@ func getAllQuestions(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		defer rows.Close()
-		var list []Question
+		var list []models.Question
 		for rows.Next() {
-			var q Question
+			var q models.Question
 			var opts string
 
 			err := rows.Scan(&q.ID, &q.QuestionText, &opts, &q.CorrectIndex)
@@ -126,7 +118,7 @@ func getOneQuestion(db *sql.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		var q Question
+		var q models.Question
 		var opts string
 
 		err = db.QueryRow(
@@ -156,7 +148,7 @@ func updateQuestion(db *sql.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		var q Question
+		var q models.Question
 		err = json.NewDecoder(r.Body).Decode(&q)
 		if err != nil {
 			http.Error(w, err.Error(), 400)

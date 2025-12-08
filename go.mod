@@ -1,4 +1,4 @@
-module quizapi
+module CS_Master
 
 go 1.25.3
 
