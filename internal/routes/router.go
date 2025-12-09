@@ -23,5 +23,7 @@ func SetupRouter(db *sql.DB) *chi.Mux {
 	r.Delete("/questions/{id}", handlers.DeleteQuestion(db))
 	r.Post("/questions/{id}/check", handlers.CheckAnswer(db))
 
+	r.Post("/signup", handlers.Signup(db))
+
 	return r
 }
