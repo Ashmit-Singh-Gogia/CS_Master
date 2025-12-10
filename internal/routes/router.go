@@ -24,6 +24,7 @@ func SetupRouter(db *sql.DB) *chi.Mux {
 	r.Post("/questions/{id}/check", handlers.CheckAnswer(db))
 
 	r.Post("/signup", handlers.Signup(db))
+	r.Post("/login", handlers.Login(db))
 
 	return r
 }
